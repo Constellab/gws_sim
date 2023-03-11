@@ -51,7 +51,7 @@ class NonlinearODESim(Task):
             short_description="The differential equations (e.g. dt/dx = alpha * x). It is not used if a nonlinear system is already given in the inputs."),
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         if "system" in inputs:
             ode_system = inputs["system"]
         else:

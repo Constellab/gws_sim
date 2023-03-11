@@ -31,7 +31,7 @@ class LinearODESim(Task):
         'method': StrParam(default_value='RK45', allowed_values=["RK45", "RK23", "DOP853", "Radau", "BDF", "LSODA"], human_name="Method", short_description="Integration method"),
     }
 
-    async def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         ode_system = inputs["system"]
         init_state = [float(x) for x in params["initial_state"]]
         if init_state:

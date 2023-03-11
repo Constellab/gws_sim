@@ -12,7 +12,7 @@ settings = Settings.get_instance()
 
 class TestLoadsDumps(BaseTestCase):
 
-    async def test_nonlin_exporter(self):
+    def test_nonlin_exporter(self):
         ode_sys = NonlinarODESystem(
             equations=DataFrame(
                 data=["dv/dt = -0.3 * v", "dp/dt = -0.3 * p"],
@@ -31,7 +31,7 @@ class TestLoadsDumps(BaseTestCase):
         data2 = new_ode_sys.dumps()
         self.assertEqual(data1, data2)
 
-    async def test_nonlin2_exporter(self):
+    def test_nonlin2_exporter(self):
         data_dir = settings.get_variable("gws_ode:testdata_dir")
 
         ode_sys = NonlinarODESystem(
@@ -57,7 +57,7 @@ class TestLoadsDumps(BaseTestCase):
         data2 = new_ode_sys.dumps()
         self.assertEqual(data1, data2)
 
-    async def test_lorentz_exporter(self):
+    def test_lorentz_exporter(self):
         data_dir = settings.get_variable("gws_ode:testdata_dir")
 
         ode_sys = NonlinarODESystem(

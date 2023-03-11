@@ -12,7 +12,7 @@ settings = Settings.get_instance()
 
 class TestNonlinearODESim(BaseTestCase):
 
-    async def test_ode_sim_1d_nonlin(self):
+    def test_ode_sim_1d_nonlin(self):
         ode_sys = NonlinarODESystem(
             equations=DataFrame(data=["dv/dt = -0.3 * v"], columns=["equation"], index=["velocity"])
         )
@@ -23,7 +23,7 @@ class TestNonlinearODESim(BaseTestCase):
             inputs={"system": ode_sys},
             task_type=NonlinearODESim
         )
-        outputs = await tester.run()
+        outputs = tester.run()
 
         # test results
         result = outputs["result"]
@@ -41,7 +41,7 @@ class TestNonlinearODESim(BaseTestCase):
         self.assertTrue(np.all(np.isclose(df.iloc[4, 1], 4.940359, atol=0.001)))
         print(result)
 
-    async def test_ode_sim_2d_nonlin(self):
+    def test_ode_sim_2d_nonlin(self):
         ode_sys = NonlinarODESystem(
             equations=DataFrame(
                 data=["dv/dt = -0.3 * v", "dp/dt = -0.3 * p"],
@@ -54,7 +54,7 @@ class TestNonlinearODESim(BaseTestCase):
             inputs={"system": ode_sys},
             task_type=NonlinearODESim
         )
-        outputs = await tester.run()
+        outputs = tester.run()
 
         # test results
         result = outputs["result"]
@@ -74,7 +74,7 @@ class TestNonlinearODESim(BaseTestCase):
         self.assertTrue(np.all(np.isclose(df.iloc[:, 1].values, df.iloc[:, 2].values, atol=0.001)))
         print(result)
 
-    async def test_ode_sim_1d_hill(self):
+    def test_ode_sim_1d_hill(self):
         ode_sys = NonlinarODESystem(
             equations=DataFrame(
                 data=["dv/dt = law.hill(2,0.5,3,v)"],
@@ -87,7 +87,7 @@ class TestNonlinearODESim(BaseTestCase):
             inputs={"system": ode_sys},
             task_type=NonlinearODESim
         )
-        outputs = await tester.run()
+        outputs = tester.run()
 
         # test results
         result = outputs["result"]
@@ -96,7 +96,7 @@ class TestNonlinearODESim(BaseTestCase):
         self.assertTrue(np.all(np.isclose(df.iloc[4, 1], 5.079922, atol=0.001)))
         print(df)
 
-    async def test_ode_sim_1d_hill_with_param(self):
+    def test_ode_sim_1d_hill_with_param(self):
         ode_sys = NonlinarODESystem(
             equations=DataFrame(
                 data=["dv/dt = law.hill(vmax,KH,n,v)"],
@@ -113,7 +113,7 @@ class TestNonlinearODESim(BaseTestCase):
             inputs={"system": ode_sys},
             task_type=NonlinearODESim
         )
-        outputs = await tester.run()
+        outputs = tester.run()
 
         # test results
         result = outputs["result"]
@@ -123,7 +123,7 @@ class TestNonlinearODESim(BaseTestCase):
         print(df)
 
 
-    async def test_ode_lorentz(self):
+    def test_ode_lorentz(self):
         ode_sys = NonlinarODESystem(
             equations=DataFrame(
                 data=["du/dt = -sigma*(u - v)", "dv/dt = rho*u - v - u*w", "dw/dt = -beta*w + u*v"],
@@ -140,7 +140,7 @@ class TestNonlinearODESim(BaseTestCase):
             inputs={"system": ode_sys},
             task_type=NonlinearODESim
         )
-        outputs = await tester.run()
+        outputs = tester.run()
 
         # test results
         result = outputs["result"]

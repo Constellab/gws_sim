@@ -28,7 +28,8 @@ class NetworkExporter(ResourceExporter):
             default_value=DEFAULT_FILE_FORMAT,
             short_description="File format")}
 
-    async def export_to_path(self, source: NonlinarODESystem, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
+    def export_to_path(
+            self, source: NonlinarODESystem, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         """
         Export an ODE system
 

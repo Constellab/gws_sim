@@ -12,7 +12,7 @@ settings = Settings.get_instance()
 
 class TestLinearODESim(BaseTestCase):
 
-    async def test_ode_sim_1d_lin(self):
+    def test_ode_sim_1d_lin(self):
         ode_sys = LinarODESystem(
             A=DataFrame(data=[-0.3], columns=["velocity"], index=["velocity"]),
             B=None
@@ -24,7 +24,7 @@ class TestLinearODESim(BaseTestCase):
             inputs={"system": ode_sys},
             task_type=LinearODESim
         )
-        outputs = await tester.run()
+        outputs = tester.run()
 
         # test results
         result = outputs["result"]
@@ -41,7 +41,7 @@ class TestLinearODESim(BaseTestCase):
         self.assertTrue(np.all(np.isclose(df.iloc[4, 1], 4.940359, atol=0.001)))
         print(result)
 
-    async def test_ode_sim_2d_lin(self):
+    def test_ode_sim_2d_lin(self):
         ode_sys = LinarODESystem(
             A=DataFrame(
                 data=[[-0.3, 0,],
@@ -56,7 +56,7 @@ class TestLinearODESim(BaseTestCase):
             inputs={"system": ode_sys},
             task_type=LinearODESim
         )
-        outputs = await tester.run()
+        outputs = tester.run()
 
         # test results
         result = outputs["result"]

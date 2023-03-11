@@ -19,7 +19,8 @@ class NonlinarODESystemImporter(ResourceImporter):
     config_specs: ConfigSpecs = {
     }
 
-    async def import_from_path(self, source: File, params: ConfigParams, target_type: Type[NonlinarODESystem]) -> NonlinarODESystem:
+    def import_from_path(
+            self, source: File, params: ConfigParams, target_type: Type[NonlinarODESystem]) -> NonlinarODESystem:
         """
         Import an ODE system
         """

@@ -44,7 +44,9 @@ class NonlinarODESystem(BaseODESystem):
         super().__init__()
         if equations is not None:
             self._set_system(equations)
-            self._prepare_mem_eqn()
+
+        self._prepare_mem_eqn()  # /!\ do not remove
+
         if parameters is not None:
             self.set_parameters(parameters)
 
@@ -177,23 +179,23 @@ class NonlinarODESystem(BaseODESystem):
     # -- S --
 
     def set_parameters(self, parameters: Union[str, Table, DataFrame]):
-        parameters = self._prepare_parameters(parameters)
+        parameters = self._format_parameters(parameters)
         self._parameters = parameters
 
     def set_default_parameters(self, parameters: Union[str, Table, DataFrame]):
         """ Set the parameters """
-        parameters = self._prepare_parameters(parameters)
+        parameters = self._format_parameters(parameters)
         parameters.name = self.DEFAULT_PARAMETER_TABLE_NAME
         self.add_resource(parameters)
 
     def set_initial_state(self, initial_state: Union[str, list, Table, DataFrame]):
         """ Set the initial state """
-        initial_state = self._prepare_initial_state(initial_state)
+        initial_state = self._format_initial_state(initial_state)
         self._initial_state = initial_state
 
     def set_default_initial_state(self, initial_state: Union[str, list, Table, DataFrame]):
         """ Set the default initial state """
-        initial_state = self._prepare_initial_state(initial_state)
+        initial_state = self._format_initial_state(initial_state)
         initial_state.name = self.DEFAULT_INITIAL_STATE_TABLE_NAME
         self.add_resource(initial_state)
         # check data size
@@ -201,7 +203,7 @@ class NonlinarODESystem(BaseODESystem):
         if len(x_0) != self.size:
             raise BadRequestException("The size of the default initial state data match with the size of the system")
 
-    def _prepare_initial_state(self, initial_state):
+    def _format_initial_state(self, initial_state):
         if isinstance(initial_state, str):
             initial_state = initial_state.split("\n")
             initial_state = Table(DataFrame({"initial_state": initial_state}))
@@ -213,7 +215,7 @@ class NonlinarODESystem(BaseODESystem):
             raise BadRequestException("The initial state table must be a DataFrame or a Table")
         return initial_state
 
-    def _prepare_parameters(self, parameters):
+    def _format_parameters(self, parameters):
         if isinstance(parameters, str):
             parameters = parameters.split("\n")
             parameters = Table(DataFrame({"parameters": parameters}))

@@ -124,9 +124,6 @@ class NonlinarODESystem(BaseODESystem):
         if equations is None:
             return
 
-        if self._mem_diff_eqn_rhs is None:
-            self._prepare_mem_eqn()
-
         self._mem_var_names = []
         self._mem_diff_eqn_rhs = []
         self._mem_diff_var_names = []

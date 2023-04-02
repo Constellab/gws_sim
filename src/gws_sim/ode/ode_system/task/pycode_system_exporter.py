@@ -3,25 +3,23 @@
 # The use and distribution of this software is prohibited without the prior consent of Gencovery SAS.
 # About us: https://gencovery.com
 
-import json
 import os
 from typing import Type
 
-from gws_core import (BadRequestException, ConfigParams, ConfigSpecs, File,
+from gws_core import (ConfigParams, ConfigSpecs, File,
                       FileHelper, ResourceExporter, StrParam,
                       exporter_decorator)
-from pandas import DataFrame
 
-from ..ode_nonlin_system import NonlinarODESystem
+from ..pycode_ode_system import PyCodeODESystem
 
 
-@exporter_decorator(unique_name="NonlinarODESystemExporter", human_name="Nonlinar ODE system exporter",
-                    source_type=NonlinarODESystem, target_type=File)
-class NetworkExporter(ResourceExporter):
-    ALLOWED_FILE_FORMATS = ["json"]
-    DEFAULT_FILE_FORMAT = "json"
+@exporter_decorator(unique_name="PyCodeODESystemExporter", human_name="PyCode ODE system exporter",
+                    source_type=PyCodeODESystem, target_type=File)
+class PyCodeODESystemExporter(ResourceExporter):
+    ALLOWED_FILE_FORMATS = ["py", "txt"]
+    DEFAULT_FILE_FORMAT = "py"
     config_specs: ConfigSpecs = {
-        'file_name': StrParam(default_value="network", short_description="File name (without extension)"),
+        'file_name': StrParam(default_value="system", short_description="File name (without extension)"),
         'file_format':
         StrParam(
             allowed_values=ALLOWED_FILE_FORMATS,
@@ -29,7 +27,7 @@ class NetworkExporter(ResourceExporter):
             short_description="File format")}
 
     def export_to_path(
-            self, source: NonlinarODESystem, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
+            self, source: PyCodeODESystem, dest_dir: str, params: ConfigParams, target_type: Type[File]) -> File:
         """
         Export an ODE system
 
@@ -38,11 +36,11 @@ class NetworkExporter(ResourceExporter):
         """
 
         file_name = params.get_value("file_name", source.name or "system")
-        file_format = FileHelper.clean_extension(params.get_value("file_format", "json"))
+        file_format = FileHelper.clean_extension(params.get_value("file_format", "py"))
         file_path = os.path.join(dest_dir, file_name + '.' + file_format)
 
         with open(file_path, 'w', encoding="utf-8") as fp:
-            data = source.dumps()
-            json.dump(data, fp)
+            data = source.dumps(text=True)
+            fp.write(data)
 
         return target_type(path=file_path)

@@ -1,0 +1,13 @@
+#parameters
+sigma = 10
+beta = 2.667
+rho = 28
+
+#initial_state
+u = 0
+v, w = 1.0, 1.05
+
+#equations
+du/dt = -sigma*(u - v)
+dv/dt = rho*u - v - u*w
+dw/dt = -beta*w + u*v

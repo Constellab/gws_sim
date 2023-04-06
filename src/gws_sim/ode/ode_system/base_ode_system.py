@@ -6,15 +6,15 @@
 from typing import Any
 from abc import abstractmethod
 from gws_core import ResourceSet, resource_decorator
-from ..sim_system.sim_system import SimSystem
+from ..sim_system.ode_sim_system import ODESimSystem
 
 
 @resource_decorator("BaseODESystem", hide=True)
 class BaseODESystem(ResourceSet):
 
     @abstractmethod
-    def create_sim_system(self) -> SimSystem:
-        """ Creates a SimSystem """
+    def create_sim_system(self) -> ODESimSystem:
+        """ Creates a  """
 
     @abstractmethod
     def dumps(self) -> Any:

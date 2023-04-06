@@ -1,6 +1,6 @@
 
 from gws_core import BaseTestCase
-from gws_sim import PyCodeODESystem, SimSystem
+from gws_sim import PyCodeODESystem, ODESimSystem
 
 
 class TestODESystem(BaseTestCase):
@@ -8,8 +8,8 @@ class TestODESystem(BaseTestCase):
     def test_ode_lorentz(self):
 
         pycode = """
-from gws_sim import SimSystem
-class Model(SimSystem):
+from gws_sim import ODESimSystem
+class Model(ODESimSystem):
     def initial_state(self, args=None):
         return [0, 1, 1.05]
 
@@ -30,7 +30,7 @@ class Model(SimSystem):
         )
 
         sim_sys = ode_sys.create_sim_system()
-        self.assertTrue(isinstance(sim_sys, SimSystem))
+        self.assertTrue(isinstance(sim_sys, ODESimSystem))
 
         sol = sim_sys.simulate(t_start=0, t_end=100, t_step=0.1)
         self.assertEqual(sol.success, True)

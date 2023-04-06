@@ -14,16 +14,16 @@ class TestLoadsDumps(BaseTestCase):
     def test_simple_ode_system_dump_load(self):
         ode_sys = SimpleODESystem(
             equations=["du/dt = -sigma*(u - v)", "dv/dt = rho*u - v - u*w", "dw/dt = -beta*w + u*v"],
-            default_parameters=["sigma, beta, rho = 10, 2.667, 28"],
-            default_initial_state=["u, v, w = 0, 1, 1.05"]
+            parameters=["sigma, beta, rho = 10, 2.667, 28"],
+            initial_state=["u, v, w = 0, 1, 1.05"]
         )
 
         # dump as json
         data = ode_sys.dumps()
         self.assertTrue(isinstance(data, dict))
-        self.assertTrue("default_parameters" in data)
-        self.assertTrue("default_initial_state" in data)
-        self.assertEqual(data["default_parameters"], ['sigma, beta, rho = 10, 2.667, 28'])
+        self.assertTrue("parameters" in data)
+        self.assertTrue("initial_state" in data)
+        self.assertEqual(data["parameters"], ['sigma, beta, rho = 10, 2.667, 28'])
 
         sys2 = ode_sys.loads(data)
         self.assertTrue(isinstance(sys2, SimpleODESystem))
@@ -31,15 +31,15 @@ class TestLoadsDumps(BaseTestCase):
         # dump as test
         text_data = ode_sys.dumps(text=True)
         self.assertTrue(isinstance(text_data, str))
-        self.assertTrue("#default_parameters" in text_data)
+        self.assertTrue("#parameters" in text_data)
 
         sys3 = ode_sys.loads(text_data)
         self.assertTrue(isinstance(sys3, SimpleODESystem))
 
     def test_pycode_ode_system_dump_load(self):
         pycode = """
-from gws_sim import SimSystem
-class Model(SimSystem):
+from gws_sim import
+class Model():
     def initial_state(self, args=None):
         return [0, 1, 1.05]
 

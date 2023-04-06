@@ -5,10 +5,9 @@
 
 import os
 import tempfile
-from typing import Any
 
 from gws_core import resource_decorator, BadRequestException, Text, PackageHelper
-from ..sim_system.sim_system import SimSystem
+from ..sim_system.ode_sim_system import ODESimSystem
 from .base_ode_system import BaseODESystem
 
 
@@ -24,8 +23,8 @@ class PyCodeODESystem(BaseODESystem):
 
     # -- C --
 
-    def create_sim_system(self) -> SimSystem:
-        """ Creates a SimSystem """
+    def create_sim_system(self) -> ODESimSystem:
+        """ Creates a  """
         code = self.get_code()
         if code is None:
             raise BadRequestException("No code defined")

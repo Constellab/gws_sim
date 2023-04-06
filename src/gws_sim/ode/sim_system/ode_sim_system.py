@@ -4,14 +4,16 @@
 # About us: https://gencovery.com
 
 from abc import abstractmethod
+from typing import List
 
 import numpy as np
 from scipy.integrate import solve_ivp
 
 from gws_core import BadRequestException
+from ...sim_system.generalized_sim_system import GeneralizedSimSystem
 
 
-class SimSystem:
+class ODESimSystem(GeneralizedSimSystem):
 
     def before_simulate(self):
         """
@@ -21,11 +23,15 @@ class SimSystem:
 
     @abstractmethod
     def initial_state(self, args=None) -> np.ndarray:
-        """ The initial tate of the system """
+        """ The initial state of the system """
 
     @abstractmethod
     def parameters(self, t, args=None) -> np.ndarray:
         """ The derivative of the system """
+
+    @abstractmethod
+    def state_names(self) -> List[str]:
+        """ The state names """
 
     @abstractmethod
     def derivative(self, t: np.ndarray, x: np.ndarray, args=None) -> np.ndarray:

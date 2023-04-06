@@ -1,14 +1,10 @@
-
-from gws_core import BaseTestCase, Settings
-from gws_sim import ODESimSystem
-
-settings = Settings.get_instance()
+from gws_sim import
 
 
-class Lorentz(ODESimSystem):
+class Model():
     def state_names(self):
         """ state_names """
-        return "u", "v", "w"
+        return ("u", "v", "w")
 
     def initial_state(self, args=None):
         """ initial_state """
@@ -26,16 +22,4 @@ class Lorentz(ODESimSystem):
         dudt = -sigma*(u - v)
         dvdt = rho*u - v - u*w
         dwdt = -beta*w + u*v
-        return [dudt, dvdt, dwdt]
-
-
-class TestLinearODESim(BaseTestCase):
-
-    def test_nonlin(self):
-        sys = Lorentz()
-        sol = sys.simulate(t_start=0, t_end=100, t_step=0.05)
-
-        self.assertEqual(sol.success, True)
-        self.assertEqual(sol.status, 0)
-
-        print(sol)
+        return (dudt, dvdt, dwdt)

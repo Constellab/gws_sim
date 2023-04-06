@@ -10,31 +10,30 @@ import tempfile
 
 from pandas import DataFrame
 
-from gws_core import resource_decorator, BadRequestException, Table, PackageHelper
-from ..sim_system.sim_system import SimSystem
+from gws_core import resource_decorator, BadRequestException, Table, PackageHelper, view, TextView
+from ..sim_system.ode_sim_system import ODESimSystem
 from .base_ode_system import BaseODESystem
 
 
 @resource_decorator("SimpleODESystem", hide=True)
 class SimpleODESystem(BaseODESystem):
 
-    DEFAULT_INITIAL_STATE_TABLE_NAME = "Default unitial state"
-    DEFAULT_PARAMETER_TABLE_NAME = "Default parameters"
+    INITIAL_STATE_TABLE_NAME = "Initial state"
+    PARAMETER_TABLE_NAME = "Parameters"
     EQUATION_TABLE_NAME = "System"
 
-    def __init__(self, equations=None, default_parameters=None, default_initial_state=None):
+    def __init__(self, equations=None, parameters=None, initial_state=None):
         super().__init__()
         if equations is not None:
             self._set_equations(equations)
-            self._set_default_parameters(default_parameters)
-            self._set_default_initial_state(default_initial_state)
+            self._set_parameters(parameters)
+            self._set_initial_state(initial_state)
 
     # -- C --
 
-    def create_sim_system(self) -> SimSystem:
-        """ Creates a SimSystem """
+    def create_sim_system(self) -> ODESimSystem:
+        """ Create a  """
         code = self.generate_code()
-
         _, snippet_filepath = tempfile.mkstemp(suffix=".py")
         with open(snippet_filepath, 'w', encoding="utf-8") as fp:
             fp.write(code)
@@ -53,21 +52,21 @@ class SimpleODESystem(BaseODESystem):
     def dumps(self, text=False) -> Union[dict, str]:
         """ Dump the system to a destination data """
         equations = self.get_equations().get_data().iloc[:, 0].to_list()
-        default_initial_state = self.get_default_initial_state().get_data().iloc[:, 0].to_list()
-        default_parameters = self.get_default_parameters().get_data().iloc[:, 0].to_list()
+        initial_state = self.get_initial_state().get_data().iloc[:, 0].to_list()
+        parameters = self.get_parameters().get_data().iloc[:, 0].to_list()
 
         if text is True:
             data = "" +\
-                "#default_parameters\n" + \
-                "\n".join(default_parameters) + "\n\n" +\
-                "#default_initial_state\n" + \
-                "\n".join(default_initial_state) + "\n\n" +\
+                "#parameters\n" + \
+                "\n".join(parameters) + "\n\n" +\
+                "#initial_state\n" + \
+                "\n".join(initial_state) + "\n\n" +\
                 "#equations\n" + \
                 "\n".join(equations) + "\n"
         else:
             data = {
-                "default_parameters": default_parameters,
-                "default_initial_state": default_initial_state,
+                "parameters": parameters,
+                "initial_state": initial_state,
                 "equations": equations,
             }
         return data
@@ -79,8 +78,8 @@ class SimpleODESystem(BaseODESystem):
         """ Create a SimpleODESystem from a text """
         lines = text.split("\n")
         data = {
-            "#default_parameters": [],
-            "#default_initial_state": [],
+            "#parameters": [],
+            "#initial_state": [],
             "#equations": []
         }
 
@@ -98,8 +97,8 @@ class SimpleODESystem(BaseODESystem):
                 data[current_key].append(line)
 
         return SimpleODESystem(
-            default_parameters=data["#default_parameters"],
-            default_initial_state=data["#default_initial_state"],
+            parameters=data["#parameters"],
+            initial_state=data["#initial_state"],
             equations=data["#equations"]
         )
 
@@ -111,23 +110,23 @@ class SimpleODESystem(BaseODESystem):
             return None
         return self.get_resource(self.EQUATION_TABLE_NAME)
 
-    def get_default_parameters(self):
-        """ Get the default parameters """
-        if self.resource_exists(self.DEFAULT_PARAMETER_TABLE_NAME):
-            return self.get_resource(self.DEFAULT_PARAMETER_TABLE_NAME)
+    def get_parameters(self):
+        """ Get the parameters """
+        if self.resource_exists(self.PARAMETER_TABLE_NAME):
+            return self.get_resource(self.PARAMETER_TABLE_NAME)
         else:
             return None
 
-    def get_default_initial_state(self):
-        """ Get the default initial state """
-        if self.resource_exists(self.DEFAULT_INITIAL_STATE_TABLE_NAME):
-            return self.get_resource(self.DEFAULT_INITIAL_STATE_TABLE_NAME)
+    def get_initial_state(self):
+        """ Get the initial state """
+        if self.resource_exists(self.INITIAL_STATE_TABLE_NAME):
+            return self.get_resource(self.INITIAL_STATE_TABLE_NAME)
         else:
             return Table()
 
     def _generate_equation_code(self, state, params) -> str:
         code_list = []
-        var_list = []
+        dvar_list = []
         lines = self.get_equations().get_data().iloc[:, 0].tolist()
         for line in lines:
             if line.startswith("#"):
@@ -137,19 +136,19 @@ class SimpleODESystem(BaseODESystem):
             rhs = parts[0][1].strip()
 
             code_list.append(f"d{var}dt = {rhs}")
-            var_list.append(var)
+            dvar_list.append(f"d{var}dt")
 
         code = "" +\
             "   def derivative(self, t, x, args = None):\n" +\
-            "      " + f"{state} = self.initial_state(args)\n" +\
+            "      " + f"{state} = x\n" +\
             "      " + f"{params} = self.parameters(t, args)\n\n" +\
             "      " + "\n      ".join(code_list) + "\n" +\
-            "      return" + " (" + ",".join(var_list) + ")" + "\n"
+            "      return" + " (" + ",".join(dvar_list) + ")" + "\n"
 
         return code
 
     def _generate_parameter_code(self, parameters: str = None) -> str:
-        default_parameter_data = self.get_default_parameters().get_data()
+        default_parameter_data = self.get_parameters().get_data()
         if default_parameter_data.empty:
             if len(parameters) == 0:
                 code = "" +\
@@ -157,7 +156,7 @@ class SimpleODESystem(BaseODESystem):
                     "      pass"
             else:
                 raise BadRequestException(
-                    "No default parameter were defined. Please define default parameter values before.")
+                    "No parameters defined. Please define parameters before.")
 
         param_tab = {}
         if parameters is not None:
@@ -181,10 +180,10 @@ class SimpleODESystem(BaseODESystem):
             rhs = parts[0][1].strip()
 
             if lhs in param_tab:
-                # replace the default parameter
+                # replace the parameter
                 code_list.append(f"{lhs} = {param_tab[lhs]}")
             else:
-                # use the default parameter
+                # use the parameter
                 code_list.append(f"{lhs} = {rhs}")
 
             param_list.append(lhs)
@@ -210,7 +209,7 @@ class SimpleODESystem(BaseODESystem):
 
         code_list = []
         state_list = []
-        lines = self.get_default_initial_state().get_data().iloc[:, 0].tolist()
+        lines = self.get_initial_state().get_data().iloc[:, 0].tolist()
         for line in lines:
             if line.startswith("#"):
                 continue
@@ -219,10 +218,10 @@ class SimpleODESystem(BaseODESystem):
             rhs = parts[0][1].strip()
 
             if lhs in state_tab:
-                # replace the default parameter
+                # replace the parameter
                 code_list.append(f"{lhs} = {state_tab[lhs]}")
             else:
-                # use the default parameter
+                # use the parameter
                 code_list.append(f"{lhs} = {rhs}")
 
             state_list.append(lhs)
@@ -235,15 +234,25 @@ class SimpleODESystem(BaseODESystem):
 
         return joined_state_list, code
 
+    def _generate_state_names_code(self, state):
+        state = '"' + state.replace(" ", "").replace(",", '","') + '"'
+        code = "" +\
+            "   def state_names(self):\n" +\
+            "      return" + " (" + state + ")" + "\n"
+
+        return code
+
     def generate_code(self):
         state, initial_state_code = self._generate_initial_state_code()
+        state_names_code = self._generate_state_names_code(state)
         params, parameter_code = self._generate_parameter_code()
 
         code = "" +\
             "import math\n" +\
-            "from gws_sim import SimSystem, Law\n" +\
+            "from gws_sim import ODESimSystem, Law\n" +\
             "from gws_sim import Law as law\n\n" +\
-            "class Model(SimSystem):\n" +\
+            "class Model(ODESimSystem):\n" +\
+            state_names_code + "\n" +\
             initial_state_code + "\n" +\
             parameter_code + "\n" +\
             self._generate_equation_code(state, params)
@@ -259,8 +268,8 @@ class SimpleODESystem(BaseODESystem):
         if isinstance(data, dict):
             return SimpleODESystem(
                 equations=data["equations"],
-                default_initial_state=data["default_initial_state"],
-                default_parameters=data["default_parameters"],
+                initial_state=data["initial_state"],
+                parameters=data["parameters"],
             )
         else:
             return SimpleODESystem.from_text(data)
@@ -304,22 +313,29 @@ class SimpleODESystem(BaseODESystem):
         equations.name = self.EQUATION_TABLE_NAME
         self.add_resource(equations)
 
-    def _set_default_parameters(self, parameters: Union[str, List[str]]):
+    def _set_parameters(self, parameters: Union[str, List[str]]):
         """ Set the parameters """
         if isinstance(parameters, (str, list)):
             parameters = self._parse_text(parameters, pattern=r'\s*(.+)\s*=\s*(.+)', name="parameter")
         else:
             raise BadRequestException("The parameters must be a string or list of string")
-        parameters.name = self.DEFAULT_PARAMETER_TABLE_NAME
+        parameters.name = self.PARAMETER_TABLE_NAME
         self.add_resource(parameters)
 
-    def _set_default_initial_state(self, initial_state: Union[str, List[str]]):
+    def _set_initial_state(self, initial_state: Union[str, List[str]]):
         """ Set the initial_state """
         if isinstance(initial_state, (str, list)):
             initial_state = self._parse_text(initial_state, pattern=r'\s*(.+)\s*=\s*(.+)', name="initial_state")
             if initial_state.get_data().empty:
-                raise BadRequestException("A default initial_state is required")
+                raise BadRequestException("An initial_state is required")
         else:
             raise BadRequestException("The initial_state must be a string or list of string")
-        initial_state.name = self.DEFAULT_INITIAL_STATE_TABLE_NAME
+        initial_state.name = self.INITIAL_STATE_TABLE_NAME
         self.add_resource(initial_state)
+
+    # -- VIEWS ---
+
+    @view(view_type=TextView, human_name="View pycode", short_description="Python ODE code")
+    def view_code(self, _) -> TextView:
+        text = self.generate_code()
+        return TextView(data=text)

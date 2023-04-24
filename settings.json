@@ -11,7 +11,12 @@
         "pip": [
             {
                 "source": "https://pypi.python.org/simple",
-                "packages": []
+                "packages": [
+                    {"name": "numba", "version": "0.56.4"},
+                    {"name": "pytensor", "version": "2.10.1"},
+                    {"name": "pymc", "version": "5.2.0"},
+                    {"name": "arviz", "version": "0.15.1"}
+                ]
             },
             {
                 "source": "https://$GWS_PIP_PACKAGE_TOKEN@gitlab.com/api/.../packages/pypi",

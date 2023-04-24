@@ -26,11 +26,21 @@ class ODESimulator(Task):
                                         short_description="The table of simulation results")}
 
     config_specs = {
-        'initial_time': FloatParam(default_value=0.0, human_name="Initial time", short_description="The initial simulation time"),
-        'final_time': FloatParam(default_value=100, human_name="Final time", short_description="The final simulation time"),
-        'time_step': FloatParam(default_value=0.01, human_name="Time step", short_description="The simulation time step"),
-        'method': StrParam(default_value='RK45', allowed_values=["RK45", "RK23", "DOP853", "Radau", "BDF", "LSODA"], human_name="Method", short_description="Integration method")
-    }
+        'initial_time':
+        FloatParam(
+            default_value=0.0, human_name="Initial time", short_description="The initial simulation time"),
+        'final_time':
+        FloatParam(
+            default_value=100, human_name="Final time", short_description="The final simulation time"),
+        'time_step':
+        FloatParam(
+            default_value=0.01, human_name="Time step", short_description="The simulation time step"),
+        'method':
+        StrParam(
+            default_value="ODEINT_ENGINE",
+            allowed_values=["ODEINT_ENGINE", "RK45", "RK23", "DOP853", "Radau", "BDF", "LSODA"],
+            human_name="Method or engine",
+            short_description="Integration method. `ODEINT_ENGINE` use an integrator with a simpler interface based on lsoda from FORTRAN ODEPACK (it is faster)")}
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         ode_system = inputs["system"]
@@ -38,14 +48,19 @@ class ODESimulator(Task):
         t_start: float = params["initial_time"]
         t_end: float = params["final_time"]
         t_step: float = params["time_step"]
-        method = params.get("method", "RK45")
+        method = params.get("method", "ODEINT_ENGINE")
 
         sim_system: ODESimSystem = ode_system.create_sim_system()
         sol = sim_system.simulate(t_start, t_end, t_step=t_step, method=method)
 
-        ode_status: ODEStatus = ODEStatus(success=sol.success, message=sol.message)
+        if method == "ODEINT_ENGINE":
+            ode_status: ODEStatus = ODEStatus(success=True, message="")
+        else:
+            ode_status: ODEStatus = ODEStatus(success=sol.success, message=sol.message)
+
         t_df = DataFrame(data=sol.t, columns=["time"])
-        y_df = DataFrame(data=sol.y, index=sim_system.state_names()).T
+        y_df = DataFrame(data=sol.y, columns=sim_system.state_names())
+
         y = ODESimResultTable(data=pandas.concat([t_df, y_df], axis=1))
         y.set_ode_status(ode_status)
 

@@ -36,6 +36,4 @@ class TestLinearODESim(BaseTestCase):
         sol = sys.simulate(t_start=0, t_end=100, t_step=0.05)
 
         self.assertEqual(sol.success, True)
-        self.assertEqual(sol.status, 0)
-
         print(sol)

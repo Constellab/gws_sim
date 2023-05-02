@@ -71,24 +71,24 @@ class LVSampler(MCSampler):
     def get_mu_estimate(self, mu: Tuple[pm.Distribution]):
         alpha, beta, gamma, delta, xt0, yt0 = mu
         params = (alpha, beta, gamma, delta,)
-        # sol = odeint(
-        #     func=lokta_voltera_odeint,
-        #     y0=[xt0, yt0],
-        #     t=self.get_data().loc[:, "Time"],
-        #     args=(params,)
-        # )
-        # return sol
-
-        sol = solve_ivp(
-            fun=lokta_voltera_solve_ivp,
-            t_span=[self.get_data().iat[0, 0], self.get_data().iat[-1, 0]],
-            t_eval=self.get_data().loc[:, "Time"].values.tolist(),
+        sol = odeint(
+            func=lokta_voltera_odeint,
             y0=[xt0, yt0],
-            vectorized=True,
-            method="LSODA",
+            t=self.get_data().loc[:, "Time"],
             args=(params,)
         )
-        return sol.y.T
+        return sol
+
+        # sol = solve_ivp(
+        #     fun=lokta_voltera_solve_ivp,
+        #     t_span=[self.get_data().iat[0, 0], self.get_data().iat[-1, 0]],
+        #     t_eval=self.get_data().loc[:, "Time"].values.tolist(),
+        #     y0=[xt0, yt0],
+        #     vectorized=True,
+        #     method="LSODA",
+        #     args=(params,)
+        # )
+        # return sol.y.T
 
     def get_data_likelihood_type(self):
         return pm.Normal

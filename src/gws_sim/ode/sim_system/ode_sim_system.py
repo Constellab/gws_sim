@@ -120,5 +120,5 @@ class ODESimSystem(GeneralizedSimSystem):
             )
             return ODESimSolution(solution.t, solution.y.T, solution.success, solution.message)
 
-    def simulate_with_cache()
+    def simulate_with_cache():
         pass

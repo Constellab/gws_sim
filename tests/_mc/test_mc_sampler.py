@@ -88,7 +88,7 @@ class LVSampler(MCSampler):
             method="LSODA",
             args=(params,)
         )
-        return sol.y
+        return sol.y.T
 
     def get_data_likelihood_type(self):
         return pm.Normal

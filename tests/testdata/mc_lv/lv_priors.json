@@ -1,0 +1,14 @@
+{
+    "mu": [
+        {"name": "alpha", "mu": 0.48, "sigma": 0.1, "lower": 0, "type": "TruncatedNormal"},
+        {"name": "beta", "mu": 0.02, "sigma": 0.1, "lower": 0, "type": "TruncatedNormal"},
+        {"name": "gamma", "mu": 0.93, "sigma": 0.1, "lower": 0, "type": "TruncatedNormal"},
+        {"name": "delta", "mu": 0.03, "sigma": 0.1, "lower": 0, "type": "TruncatedNormal"},
+        {"name": "xto", "mu": 34.91, "sigma": 0.1, "lower": 0, "type": "TruncatedNormal"},
+        {"name": "yto", "mu": 3.86, "sigma": 0.1, "lower": 0, "type": "TruncatedNormal"}
+    ],
+    "likelihood": {
+        "type": "Normal",
+        "params": [{"name": "sigma", "type": "HalfNormal", "sigma": 10}]
+    }
+}

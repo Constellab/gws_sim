@@ -3,15 +3,15 @@
   "author": "Gencovery",
   "author_email": "admin@gencovery.com",
   "description": "Gencovery brick for dynamical system simulation",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "variables": {
-    "gws_ode:testdata_dir": "${CURRENT_DIR}/tests/testdata"
+    "gws_sim:testdata_dir": "${CURRENT_DIR}/tests/testdata"
   },
   "environment": {
     "bricks": [
       {
         "name": "gws_core",
-        "version": "0.5.0"
+        "version": "0.5.9"
       }
     ],
     "pip": [

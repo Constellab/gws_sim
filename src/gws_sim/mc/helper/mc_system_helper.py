@@ -200,17 +200,16 @@ class MCSystemHelper:
 
     # -- S --
 
-    def sample(self, args=None):
+    def sample(self, args=None, tune=2000, draws=2000, chains=2, callback=None):
         model = self._create_model(args=args)
-        traces = self._sample(model)
+        traces = self._sample(model, tune=tune, draws=draws, chains=chains, callback=callback)
         return MCSystemHelperResult(traces, self)
 
-    def _sample(self, model):
+    def _sample(self, model, tune=2000, draws=2000, chains=2, callback=None):
         vars_list = list(model.values_to_rvs.keys())[:-1]
-        tune = draws = 2000
         # inference
         with model:
-            traces = pm.sample(step=[pm.Slice(vars_list)], tune=tune, draws=draws)
+            traces = pm.sample(step=[pm.Slice(vars_list)], tune=tune, draws=draws, chains=chains, callback=callback)
         return traces
 
     def set_data(self, data: DataFrame):

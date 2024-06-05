@@ -29,11 +29,11 @@ class ODESystemBuilder(Task):
             def parameters(self, t, args=None):
                 return 10, 2.667, 28
 
-            def derivative(self, t, x, args=None):
+            def derivative(self, t, x, ui, args=None):
                 u, v, w = x
                 sigma, rho, beta = self.parameters(t, args)
 
-                dudt = -sigma*(u - v)
+                dudt = -sigma*(u - v) + ui
                 dvdt = rho*u - v - u*w
                 dwdt = -beta*w + u*v
                 return [dudt, dvdt, dwdt]

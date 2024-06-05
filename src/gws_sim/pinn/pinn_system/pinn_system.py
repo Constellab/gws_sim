@@ -6,16 +6,15 @@
 import os
 import tempfile
 
-from gws_core import (resource_decorator, BadRequestException, Text, PackageHelper, ResourceSet)
-from ..helper.ode_system_helper import ODESystemHelper
+from gws_core import (resource_decorator, BadRequestException,
+                      Text, PackageHelper, ResourceSet)
+from ..helper.pinn_system_helper import PINNSystemHelper
 
-
-
-@resource_decorator("ODESystem", human_name="ODE system",
+@resource_decorator("PINNSystem", human_name="PINN system",
                     short_description="Dynamical system of ordinary differential equations", hide=True)
-class ODESystem(ResourceSet):
+class PINNSystem(ResourceSet):
 
-    SYSTEM_CODE_NAME = "ODE system code"
+    SYSTEM_CODE_NAME = "code"
 
     def __init__(self, code=None):
         super().__init__()
@@ -24,9 +23,10 @@ class ODESystem(ResourceSet):
 
     # -- C --
 
-    def create_sim_system_helper(self) -> ODESystemHelper:
-        """ Creates a ODE system """
+    def create_sim_system_helper(self) -> PINNSystemHelper:
+        """ Creates a PINN system """
         code = self.get_code()
+
         if code is None:
             raise BadRequestException("No code defined")
 
@@ -60,10 +60,10 @@ class ODESystem(ResourceSet):
     # -- L --
 
     @classmethod
-    def loads(cls, data: str):
+    def loads(cls, code: str):
         """ Load from a source data """
 
-        return ODESystem(code=data)
+        return PINNSystem(code=code)
 
     # -- S --
 

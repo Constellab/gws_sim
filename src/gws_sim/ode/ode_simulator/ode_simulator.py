@@ -6,13 +6,12 @@
 import pandas
 from gws_core import (ConfigParams, FloatParam, InputSpec,
                       StrParam, Task, TaskInputs, TaskOutputs,
-                      task_decorator, OutputSpecs, InputSpecs, ListParam, BadRequestException)
+                      task_decorator, OutputSpecs, InputSpecs, ListParam, BoolParam, BadRequestException)
 from pandas import DataFrame
 
 from ..table.ode_sim_result_table import ODESimResultTable, ODEStatus
 from ..ode_system.ode_system import ODESystem
 from ..helper.ode_system_helper import ODESystemHelper
-
 
 @task_decorator("ODESimulator", human_name="ODE simulator",
                 short_description="Dynamical simulation of systems of ordinary differential equations")
@@ -28,6 +27,9 @@ class ODESimulator(Task):
                                                     short_description="The table of simulation results")})
 
     config_specs = {
+        'predictive_controller':
+        BoolParam(
+            default_value=False),
         'initial_time':
         FloatParam(
             default_value=0.0, human_name="Initial time", short_description="The initial simulation time"),
@@ -55,32 +57,18 @@ class ODESimulator(Task):
         t_start: float = params["initial_time"]
         t_end: float = params["final_time"]
         t_step: float = params["time_step"]
-        initial_state: list = params["initial_state"]
-        if initial_state is not None:
-            if len(initial_state) == 1:
-                data = initial_state[0]
-                if isinstance(data, str):
-                    data = data.split(",")
-            else:
-                data = initial_state
+        method = params.get("method", "ODEINT_ENGINE")
 
-            try:
-                initial_state = [float(val) for val in data]
-            except BadRequestException as err:
-                raise BadRequestException(f"Cannot convert the initial state to vector of floats") from err
+        sim_system: ODESimSystem = ode_system.create_sim_system()
+        sol = sim_system.simulate(t_start, t_end, t_step=t_step, method=method)
 
-        method = params.get("method", "ODEINT")
-
-        sim_system_helper: ODESystemHelper = ode_system.create_sim_system_helper()
-        sol = sim_system_helper.simulate(t_start, t_end, t_step=t_step, initial_state=initial_state, method=method)
-
-        if method == "ODEINT":
+        if method == "ODEINT_ENGINE":
             ode_status: ODEStatus = ODEStatus(success=True, message="")
         else:
             ode_status: ODEStatus = ODEStatus(success=sol.success, message=sol.message)
 
         t_df = DataFrame(data=sol.t, columns=["time"])
-        y_df = DataFrame(data=sol.y, columns=sim_system_helper.state_names())
+        y_df = DataFrame(data=sol.y, columns=sim_system.state_names())
 
         y = ODESimResultTable(data=pandas.concat([t_df, y_df], axis=1))
         y.set_ode_status(ode_status)

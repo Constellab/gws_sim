@@ -53,6 +53,9 @@ class ODESystemHelper(BaseSimSystemHelper):
     def derivative(self, t: np.ndarray, x: np.ndarray, args=None) -> np.ndarray:
         """ The derivative of the system """
 
+    def initial_state_(self, args=None) -> np.ndarray:
+        return self.initial_state()
+
     def derivative_odeint(self, x: np.ndarray, t: np.ndarray, args=None) -> np.ndarray:
         """ The derivative of the system """
         return self.derivative(t, x, args)
@@ -81,6 +84,7 @@ class ODESystemHelper(BaseSimSystemHelper):
 
         if parameters is None:
             parameters = self.parameters(t=t_start, args=args)
+
         if args is None:
             args = parameters
         else:

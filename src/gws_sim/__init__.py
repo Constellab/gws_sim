@@ -19,3 +19,5 @@ from .mc.mc_system.mc_system_builder import MCSystemBuilder
 from .mc.mc_simulator.mc_simulator import MCSimulator
 from .mc.mc_prior_dict.mc_prior_dict_exporter import MCPriorDictExporter
 from .mc.mc_prior_dict.mc_prior_dict_importer import MCPriorDictImporter
+# > PINN
+from .pinn.helper.pinn_system_helper import PINNSystemHelper

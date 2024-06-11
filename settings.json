@@ -11,7 +11,7 @@
     "bricks": [
       {
         "name": "gws_core",
-        "version": "0.8.4-beta.4"
+        "version": "0.8.0-beta.4"
       }
     ],
     "pip": [

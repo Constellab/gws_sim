@@ -1,10 +1,14 @@
-name: .venv
+name: deepxde-env
 channels:
   - conda-forge
+  - defaults
 dependencies:
-  - python=3.9 
+  - python=3.9
   - pandas==1.5.2
-  - deepXDE==1.11.0
   - numpy==1.26.4
   - pytorch==1.9
   - matplotlib==3.7.0
+  - pip
+  - pip:
+    - deepxde==1.11.0
+    - paddlepaddle==2.6.0

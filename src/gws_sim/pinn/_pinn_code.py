@@ -6,113 +6,135 @@ import os
 
 print("étape a")
 
-if len(sys.argv) != 7:
-    print("Usage: python script.py <dataframe_file.csv> <string_list_file.txt> <t_start> <t_end> <initial_state>")
-    sys.exit(1)
-print("étape b")
+if len(sys.argv) != 10:
+    raise Exception("Usage: python script.py <dataframe_file.csv> <string_list_file.txt> <t_start> <t_end> <initial_state>")
 
 dataframe_file = sys.argv[1]
-print("étape c")
-
 string_list_file_equations = sys.argv[2]
-print("étape d")
-
 string_list_file_params = sys.argv[3]
-print("étape e")
-
 t_start = sys.argv[4]
-print("étape f")
-
 t_end = sys.argv[5]
-print("étape g")
-
 string_list_file_initial_state = sys.argv[6]
-print("étape h")
+number_hidden_layers = sys.argv[7]
+width_hidden_layers = sys.argv[8]
+number_iterations = sys.argv[9]
 
+if not os.path.exists(dataframe_file):
+    raise Exception(f"Error: DataFrame file '{dataframe_file}' not found.")
 
 try:
     df = pd.read_csv(dataframe_file)
-except FileNotFoundError:
-    print(f"Error: DataFrame file '{dataframe_file}' not found.")
-    sys.exit(1)
+except Exception as err:
+    raise Exception(f"Error: DataFrame file '{dataframe_file}' not found.\n{err}")
 
     # Read list of strings from text file
 try:
     with open(string_list_file_equations, 'r') as f:
         string_list_equations = [line.strip() for line in f.readlines()]
-except FileNotFoundError:
-    print(f"Error: String list file '{string_list_file_equations}' not found.")
-    sys.exit(1)
+except FileNotFoundError as err:
+    raise Exception(f"Error: String list file '{string_list_file_equations}' not found.\n{err}")
 
 # Read list of strings from text file
 try:
     with open(string_list_file_params, 'r') as f:
         string_list_params = [line.strip() for line in f.readlines()]
-except FileNotFoundError:
-    print(f"Error: String list file '{string_list_file_params}' not found.")
-    sys.exit(1)
+except FileNotFoundError as err:
+    raise Exception(f"Error: String list file '{string_list_file_params}' not found.\n{err}")
 
 # Read list of strings from text file
 try:
     with open(string_list_file_initial_state, 'r') as f:
         string_list_initial_state = [line.strip() for line in f.readlines()]
-except FileNotFoundError:
-    print(f"Error: String list file '{string_list_file_initial_state}' not found.")
-    sys.exit(1)
+except FileNotFoundError as err:
+    raise Exception(f"Error: String list file '{string_list_file_initial_state}' not found.\n{err}")
 
 C = []
 ic = []
 observe_y = []
-dy_x = []
 data_list = []
 
-for i in range(len(string_list_params)):
-    C[i] = dde.Variable(exec(string_list_params[i]))
+# Fonction pour extraire le nombre d'une clé
+def extract_number(key):
+    match = re.search(r'\d+', key)
+    return int(match.group()) if match else 0
 
-external_trainable_variables = C
+print(f"type of string_list_equations : {type(string_list_equations)}, number of elements = {len(string_list_equations)}")
+print(string_list_equations)
+print(f"type of string_list_params : {type(string_list_params)}")
+print(string_list_params)
+print(f"type of string_list_initial_state : {type(string_list_initial_state)}")
+print(string_list_initial_state)
+print(f"type of string_list_initial_state[0] : {type(string_list_initial_state[0])}")
+print(f"type of float(string_list_initial_state[0]) : {type(float(string_list_initial_state[0]))}")
+
+'''# Trier les clés en fonction des nombres extraits
+sorted_keys = sorted(params.keys(), key=extract_number)
+'''
+
+for i in range(len(string_list_params)):
+    C.append(dde.Variable(float(string_list_params[i])))
+    print(C)
+
+'''C0 = dde.Variable(1.0)
+C1 = dde.Variable(1.0)
+C2 = dde.Variable(1.0)
+'''
+external_trainable_variables = C #[C0, C1, C2]
 
 variable = dde.callbacks.VariableValue(
-    external_trainable_variables, period=1000, filename="variables.dat"
+    external_trainable_variables, period=1000 #, filename="variables.dat"
 )
 
 # Most backends
-def ODE_model(x, y):
+def ODE_model(x, y_):
 
-    equations = []
+    '''D = 0 # Batch
+    S_in = 100
+
+    y1, y2, y3 = y_[:, 0:1], y_[:, 1:2], y_[:, 2:3]  # X, S, P
+
+    dy1_x = dde.grad.jacobian(y_, x, i=0)
+    dy2_x = dde.grad.jacobian(y_, x, i=1)
+    dy3_x = dde.grad.jacobian(y_, x, i=2)
+
+    return [dy1_x - y1,  dy2_x - y2, dy3_x - y3]'''
+
+    equations_list = []
+    dy_x = []
+    y = []
 
     for j in range(len(string_list_equations)):
+        y.append(y_[:, j:j+1])
+        dy_x.append(dde.grad.jacobian(y_, x, i=j))
+        #print(f"dy_x = {dy_x}")
 
-        if j==len(string_list_equations): y[j] = y[:, j:]
-        else: y[j] = y[:, j:j+1]
+    for i in range(len(string_list_equations)):
+        equations_list.append(dy_x[i] - eval(string_list_equations[i]))
 
-        dy_x[j] = dde.grad.jacobian(y, x, i=j)
-
-        equations.append(dy_x[j] - exec(string_list_equations[j]))
-
-    return equations
+    return equations_list
 
 def boundary(_, on_initial):
     return on_initial
 
-geom = dde.geometry.TimeDomain(t_start, t_end)
+geom = dde.geometry.TimeDomain(float(t_start), float(t_end))
 
+df_data = df
 data_set_array = df.to_numpy()
 
 observe_t = data_set_array[:, 0:1]
-print("étape 0")
-
-for k in range(len(string_list_equations)+1):
+print(observe_t)
+for k in range(len(string_list_equations)):
 
     # Initial conditions
-    ic[k] = dde.icbc.IC(geom, lambda X: exec(string_list_file_initial_state[k]) , boundary, component=k)
-
+    ic.append(dde.icbc.IC(geom, lambda X: float(string_list_initial_state[k]), boundary, component=k))
+    print(f"float(string_list_initial_state[{k}]) = {float(string_list_initial_state[k])}")
     # Get the train data
-    observe_y[k] = dde.icbc.PointSetBC(observe_t, data_set_array[:, k:k+1], component=k)
+    observe_y.append(dde.icbc.PointSetBC(observe_t, data_set_array[:, k+1:k+2], component=k))
+    print(data_set_array[:, k+1:k+2])
     print("étape 1")
 
-data_list.append(ic)
-data_list.append(observe_y)
-
+data_list = ic + observe_y
+print(data_list)
 data = dde.data.PDE(
     geom,
     ODE_model,
@@ -123,14 +145,14 @@ data = dde.data.PDE(
 )
 print("étape 2")
 
-net = dde.nn.FNN([1] + [40] * 3 + [3], "tanh", "Glorot uniform")
+net = dde.nn.FNN([1] + [int(width_hidden_layers)] * int(number_hidden_layers) + [len(string_list_equations)], "tanh", "Glorot uniform")
 model = dde.Model(data, net)
 print("étape 3")
 # train adam
 model.compile(
     "adam", lr=0.001, external_trainable_variables=external_trainable_variables
 )
-losshistory, train_state = model.train(iterations=1, callbacks=[variable])
+losshistory, train_state = model.train(iterations=int(number_iterations), callbacks=[variable])
 print("étape 4")
 
 # train lbfgs
@@ -147,6 +169,12 @@ LIST = best_y[idx, :]
 dft = pd.DataFrame(t, columns=['time'])
 dfy = pd.DataFrame(LIST)
 
+new_column_names_result = [f'result_col_{i+1}' for i in range(len(dfy.columns))]
+dfy.columns = new_column_names_result
+
+new_column_names_data = [f'data_col_{i+1}' for i in range(len(df_data.columns))]
+df_data.columns = new_column_names_data
+
 loss_steps = losshistory.steps
 loss_train = np.array([np.sum(loss) for loss in losshistory.loss_train])
 loss_test = np.array([np.sum(loss) for loss in losshistory.loss_test])
@@ -154,11 +182,12 @@ loss_test = np.array([np.sum(loss) for loss in losshistory.loss_test])
 df_loss_steps = pd.DataFrame(loss_steps, columns=['loss_steps'])
 df_loss_train = pd.DataFrame(loss_train, columns=['loss_train'])
 df_loss_test = pd.DataFrame(loss_test, columns=['loss_test'])
+
 print("étape 5")
-df_result = pd.concat([dft, dfy, df_loss_steps, df_loss_test, df_loss_train], axis=1)
+df_result = pd.concat([dft, dfy, df_data, df_loss_steps, df_loss_test, df_loss_train], axis=1)
 path = "pinn_result.csv"
 
-print("étape6")
+print("étape 6")
 csv_file_path = os.path.join(os.path.abspath(
             os.path.dirname(__file__)),  "pinn_result.csv")
 df_result.to_csv(csv_file_path, index=False)

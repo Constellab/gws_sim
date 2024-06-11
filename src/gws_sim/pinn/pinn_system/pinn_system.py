@@ -7,7 +7,7 @@ import os
 import tempfile
 
 from gws_core import (resource_decorator, BadRequestException,
-                      Text, PackageHelper, ResourceSet)
+                      Text, PackageHelper, ResourceSet, MessageDispatcher)
 from ..helper.pinn_system_helper import PINNSystemHelper
 
 @resource_decorator("PINNSystem", human_name="PINN system",

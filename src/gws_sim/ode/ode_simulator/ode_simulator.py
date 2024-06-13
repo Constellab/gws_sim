@@ -59,7 +59,7 @@ class ODESimulator(Task):
         t_step: float = params["time_step"]
         method = params.get("method", "ODEINT_ENGINE")
 
-        sim_system: ODESimSystem = ode_system.create_sim_system()
+        sim_system: ODESystem = ode_system.create_sim_system_helper()
         sol = sim_system.simulate(t_start, t_end, t_step=t_step, method=method)
 
         if method == "ODEINT_ENGINE":

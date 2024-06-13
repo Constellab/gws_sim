@@ -4,7 +4,7 @@ import numpy as np
 import sys
 import os
 
-print("étape a")
+print("step a")
 
 if len(sys.argv) != 10:
     raise Exception("Usage: python script.py <dataframe_file.csv> <string_list_file.txt> <t_start> <t_end> <initial_state>")
@@ -53,11 +53,6 @@ ic = []
 observe_y = []
 data_list = []
 
-# Fonction pour extraire le nombre d'une clé
-def extract_number(key):
-    match = re.search(r'\d+', key)
-    return int(match.group()) if match else 0
-
 print(f"type of string_list_equations : {type(string_list_equations)}, number of elements = {len(string_list_equations)}")
 print(string_list_equations)
 print(f"type of string_list_params : {type(string_list_params)}")
@@ -67,19 +62,11 @@ print(string_list_initial_state)
 print(f"type of string_list_initial_state[0] : {type(string_list_initial_state[0])}")
 print(f"type of float(string_list_initial_state[0]) : {type(float(string_list_initial_state[0]))}")
 
-'''# Trier les clés en fonction des nombres extraits
-sorted_keys = sorted(params.keys(), key=extract_number)
-'''
-
 for i in range(len(string_list_params)):
     C.append(dde.Variable(float(string_list_params[i])))
     print(C)
 
-'''C0 = dde.Variable(1.0)
-C1 = dde.Variable(1.0)
-C2 = dde.Variable(1.0)
-'''
-external_trainable_variables = C #[C0, C1, C2]
+external_trainable_variables = C
 
 variable = dde.callbacks.VariableValue(
     external_trainable_variables, period=1000 #, filename="variables.dat"
@@ -131,7 +118,7 @@ for k in range(len(string_list_equations)):
     # Get the train data
     observe_y.append(dde.icbc.PointSetBC(observe_t, data_set_array[:, k+1:k+2], component=k))
     print(data_set_array[:, k+1:k+2])
-    print("étape 1")
+    print("step 1")
 
 data_list = ic + observe_y
 print(data_list)
@@ -143,17 +130,18 @@ data = dde.data.PDE(
     num_boundary=len(string_list_equations),
     anchors=observe_t,
 )
-print("étape 2")
+print("step 2")
 
 net = dde.nn.FNN([1] + [int(width_hidden_layers)] * int(number_hidden_layers) + [len(string_list_equations)], "tanh", "Glorot uniform")
 model = dde.Model(data, net)
-print("étape 3")
+print("step 3")
+
 # train adam
 model.compile(
     "adam", lr=0.001, external_trainable_variables=external_trainable_variables
 )
 losshistory, train_state = model.train(iterations=int(number_iterations), callbacks=[variable])
-print("étape 4")
+print("step 4")
 
 # train lbfgs
 model.compile("L-BFGS", external_trainable_variables=external_trainable_variables)
@@ -183,12 +171,12 @@ df_loss_steps = pd.DataFrame(loss_steps, columns=['loss_steps'])
 df_loss_train = pd.DataFrame(loss_train, columns=['loss_train'])
 df_loss_test = pd.DataFrame(loss_test, columns=['loss_test'])
 
-print("étape 5")
+print("step 5")
 df_result = pd.concat([dft, dfy, df_data, df_loss_steps, df_loss_test, df_loss_train], axis=1)
 path = "pinn_result.csv"
 
-print("étape 6")
+print("step 6")
 csv_file_path = os.path.join(os.path.abspath(
             os.path.dirname(__file__)),  "pinn_result.csv")
 df_result.to_csv(csv_file_path, index=False)
-print("étape 7")
+print("step 7")

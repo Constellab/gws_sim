@@ -46,18 +46,22 @@ class PINNSystemHelper(BaseSimSystemHelper):
         """ The derivative of the system """
 
     @abstractmethod
+    def additional_functions(self, args=None) -> str:
+        """ additional_functions """
+
+    @abstractmethod
     def state_names(self) -> List[str]:
         """ The state names """
 
     @abstractmethod
-    def derivative(self, y: np.ndarray, x: np.ndarray, args=None) -> np.ndarray:
+    def derivative(self, args=None) -> np.ndarray:
         """ The derivative of the system """
 
     def initial_state_(self, args=None) -> np.ndarray:
         return self.initial_state()
 
-    def simulate(self, t_start: float, t_end: float, number_hidden_layers:int, width_hidden_layers:int, number_iterations:int, initial_state=None, parameters=None, dataframe: DataFrame = None,
-                 args=None) -> Union[PINNSolution, np.ndarray]:
+    def simulate(self, t_start: float, t_end: float, number_hidden_layers:int, width_hidden_layers:int, number_iterations:int, number_iterations_predictive_controller:int, control_horizon:float, predictive_controller:bool, initial_state=None, parameters=None, dataframe: DataFrame = None,
+                additional_functions=None, args=None) -> Union[PINNSolution, np.ndarray]:
 
         if t_end <= t_start:
             raise BadRequestException(
@@ -79,14 +83,16 @@ class PINNSystemHelper(BaseSimSystemHelper):
         if initial_state is None:
             initial_state = self.initial_state(args)
 
+        if additional_functions is None:
+            additional_functions = self.additional_functions(args)
+
         self._cache = {
             "y0": initial_state,
             "t_start": t_start,
             "t_end": t_end,
         }
 
-        csv_file_path, txt_file_path_equations, txt_file_path_params, txt_file_path_initial_state, temp_dir = self.save_data_to_temp_directory(
-            dataframe, initial_state)
+        csv_file_path, txt_file_path_equations, txt_file_path_params, txt_file_path_initial_state, txt_file_path_additional_functions, temp_dir = self.save_data_to_temp_directory(dataframe, initial_state)
 
         # Unique name of the virtual env
         env_dir_name = "PinnSystemShellProxy"
@@ -98,7 +104,7 @@ class PINNSystemHelper(BaseSimSystemHelper):
 
         path_script_pinn = os.path.join(current_path, "../_pinn_code.py")
 
-        cmd = f"python3 '{path_script_pinn}' '{csv_file_path}' '{txt_file_path_equations}' '{txt_file_path_params}' '{t_start}' '{t_end}' '{txt_file_path_initial_state}' '{number_hidden_layers}' '{width_hidden_layers}' '{number_iterations}'"
+        cmd = f"python3 '{path_script_pinn}' '{csv_file_path}' '{txt_file_path_equations}' '{txt_file_path_params}' '{t_start}' '{t_end}' '{txt_file_path_initial_state}' '{number_hidden_layers}' '{width_hidden_layers}' '{number_iterations}' '{txt_file_path_additional_functions}' '{number_iterations_predictive_controller}' '{control_horizon}' '{predictive_controller}'"
 
         proxy = MambaShellProxy(
             env_dir_name, env_file_path, None, self._message_dispatcher)
@@ -140,13 +146,20 @@ class PINNSystemHelper(BaseSimSystemHelper):
             for item in list_params:
                 f.write("%s\n" % str(item))
 
+        # Save string list in temp txt file for additional functions
+        txt_file_path_additional_functions = os.path.join(
+            temp_dir, 'string_additional_functions.txt')
+        with open(txt_file_path_additional_functions, 'w') as f:
+            string_additional_functions = self.additional_functions()
+            f.write(string_additional_functions)
+
         txt_file_path_initial_state = os.path.join(
             temp_dir, 'string_list_initial_state.txt')
         with open(txt_file_path_initial_state, 'w') as f:
             for item in initial_state:
                 f.write("%s\n" % str(item))
 
-        return csv_file_path, txt_file_path_equations, txt_file_path_params, txt_file_path_initial_state, temp_dir
+        return csv_file_path, txt_file_path_equations, txt_file_path_params, txt_file_path_initial_state, txt_file_path_additional_functions, temp_dir
 
     def set_message_dispatcher(self, message_dispatcher: MessageDispatcher) -> None:
         self._message_dispatcher = message_dispatcher

@@ -27,9 +27,9 @@ class PINNSimulator(Task):
                                                     short_description="The table of simulation results")})
 
     config_specs = {
-        'predictive_controller':
-        BoolParam(
-            default_value=False, human_name="Predictive controller"),
+        'simulator_type':
+        StrParam(
+            default_value="PINN", human_name="Simulator type", allowed_values = ["PINN", "PINN + predictive controller"]),
         'number_iterations_predictive_controller':
         IntParam(
             default_value=5, human_name="Number of interations for the predictive controller", short_description="", visibility=StrParam.PROTECTED_VISIBILITY),
@@ -63,14 +63,14 @@ class PINNSimulator(Task):
         number_iterations: int = params["number_iterations"]
         number_iterations_predictive_controller: int = params["number_iterations_predictive_controller"]
         control_horizon: float = params["control_horizon"]
-        predictive_controller: bool = params['predictive_controller']
+        simulator_type: str = params['simulator_type']
         sim_system: PINNSystemHelper = pinn_system.create_sim_system_helper()
         sim_system.set_message_dispatcher(self.message_dispatcher)
 
         data_table: Table = inputs.get('data')
-
+        print(f'simulator_type = {simulator_type}')
         sol: PINNSolution = sim_system.simulate(
-            t_start, t_end, number_hidden_layers, width_hidden_layers, number_iterations, number_iterations_predictive_controller, control_horizon, predictive_controller,dataframe=data_table.get_data())
+            t_start, t_end, number_hidden_layers, width_hidden_layers, number_iterations, number_iterations_predictive_controller, control_horizon, simulator_type, dataframe=data_table.get_data())
 
         if not sol.success:
             raise Exception(sol.message)

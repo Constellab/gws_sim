@@ -27,10 +27,11 @@ number_iterations = sys.argv[9]
 string_file_additional_functions = sys.argv[10]
 number_iterations_predictive_controller = sys.argv[11]
 control_horizon = sys.argv[12]
-predictive_controller = sys.argv[13]
+simulator_type = sys.argv[13]
 
 t_start_ = float(t_start)
 t_end_ = float(t_end)
+control_horizon = float(control_horizon)
 
 
 if not os.path.exists(dataframe_file):
@@ -102,15 +103,16 @@ def _predict_substrate(horizon, F_in, t0, X0, S0, P0, K):
     K = [k_X1, k_X2, k_X3, k_P2, k_O1, k_os, k_O2, k_O3, k_op, mu_O, mu_S, K_O, K_S, K_P, K_iP, O_sat, kla]
 
     t_ = t0
-    X_ = X0
-    S_ = S0
-    P_ = P0
+    print("step _predict_substrate1")
+    y = [X0, S0, P0]
+    print("step _predict_substrate2")
+
     D = F_in
     while t_ < t0 + horizon:
 
-        X_ = X_ + dt_predict * (((k_X1**2) * r1((mu_S)**2,S_,(K_S)**2,(mu_O)**2,30,(K_O)**2,P_,(K_iP)**2,(k_os)**2) + (k_X2**2) * r2((mu_S)**2,S_,(K_S)**2,(mu_O)**2,30,(K_O)**2,P_,(K_iP)**2,(k_os)**2) + (k_X3**2) * r3((mu_S)**2,S_,(K_S)**2,(mu_O)**2,30,(K_O)**2,P_,(K_iP)**2,(k_os)**2,(k_op)**2,P_,(K_P)**2)) * X_ - D * X_)
-        S_ = S_ + dt_predict * ((-(r1((mu_S)**2,S_,(K_S)**2,(mu_O)**2,30,(K_O)**2,P_,(K_iP)**2,(k_os)**2) + r2((mu_S)**2,S_,(K_S)**2,(mu_O)**2,30,(K_O)**2,P_,(K_iP)**2,(k_os)**2)) * X_ + D * S_in - D * S_))
-        P_ = P_ + dt_predict * ((((k_P2**2) * r2((mu_S)**2,S_,(K_S)**2,(mu_O)**2,30,(K_O)**2,P_,(K_iP)**2,(k_os)**2) - r3((mu_S)**2,S_,(K_S)**2,(mu_O)**2,30,(K_O)**2,P_,(K_iP)**2,(k_os)**2,(k_op)**2,P_,(K_P)**2)) * X_ - D * P_))
+        y[0] = y[0] + dt_predict * eval(string_list_equations[0])
+        y[1] = y[1] + dt_predict * eval(string_list_equations[1])
+        y[2] = y[2] + dt_predict * eval(string_list_equations[2])
 
         t_ = t_ + dt_predict
 
@@ -119,8 +121,9 @@ def _predict_substrate(horizon, F_in, t0, X0, S0, P0, K):
         '''X_list = [X_list, X_]
         S_list = [S_list, S_]
         P_list = [P_list, P_]'''
+    print("step _predict_substrate3")
 
-    return S_
+    return y[1]
 
 def step_model(D, X_, S_, P_, dt, t_, K):
 
@@ -130,9 +133,11 @@ def step_model(D, X_, S_, P_, dt, t_, K):
 
     equations_list = []
 
-    equations_list.append(X_ + dt * eval(string_list_equations[0]))
-    equations_list.append(S_ + dt * eval(string_list_equations[1]))
-    equations_list.append(P_ + dt * eval(string_list_equations[2]))
+    y = [X_, S_, P_]
+
+    equations_list.append(y[0] + dt * eval(string_list_equations[0]))
+    equations_list.append(y[1] + dt * eval(string_list_equations[1]))
+    equations_list.append(y[2] + dt * eval(string_list_equations[2]))
 
     return equations_list
 
@@ -251,7 +256,9 @@ print(f"type of float(string_list_initial_state[0]) : {type(float(string_list_in
 print(f"type of additional_functions : {type(string_additional_functions)}")
 print(string_additional_functions)
 
-if predictive_controller == False:
+print(f"simulator_type = {simulator_type}")
+
+if simulator_type == "PINN":
 
     variable = dde.callbacks.VariableValue(
         external_trainable_variables, period=1000 #, filename="variables.dat"
@@ -367,6 +374,10 @@ if predictive_controller == False:
     print("step 7")
 
 else:
+    D_min, D_max = 0, 1  # control value bounds
+    dt_predict = 5e-3  # model integration time step (euler)
+    iter_max = 15  # for bisective algorithm
+
     # time points
     maxtime = int(t_end_) - int(t_start_)
     time = np.linspace(int(t_start_), maxtime, int(t_end_))
@@ -478,12 +489,12 @@ else:
         model = dde.Model(data, net)
 
         variable = dde.callbacks.VariableValue(
-                external_trainable_variables, period=1000 #, filename="variables.dat"
+                external_trainable_variables, period=1000, filename="variables.dat"
             )
 
         # train adam
         model.compile(
-            "adam", lr=0.001, external_trainable_variables=external_trainable_variables, loss_weights=neural_network_weights
+            "adam", lr=0.001, external_trainable_variables=external_trainable_variables#, loss_weights=neural_network_weights
         )
         losshistory, train_state = model.train(iterations=int(number_iterations), callbacks=[variable])
 
@@ -515,8 +526,11 @@ else:
         df_loss_train = pd.DataFrame(loss_train, columns=['loss_train'])
         df_loss_test = pd.DataFrame(loss_test, columns=['loss_test'])
 
+        df_time = pd.DataFrame(time, columns=['time_controller'])
+        df_control = pd.DataFrame(ex_input, columns=['control'])
+
         print("step 5")
-        df_result = pd.concat([dft, dfy, df_data, df_loss_steps, df_loss_test, df_loss_train], axis=1)
+        df_result = pd.concat([dft, dfy, df_data, df_loss_steps, df_loss_test, df_loss_train, df_time, df_control], axis=1)
         path = "pinn_result.csv"
 
         print("step 6")

@@ -60,7 +60,7 @@ class PINNSystemHelper(BaseSimSystemHelper):
     def initial_state_(self, args=None) -> np.ndarray:
         return self.initial_state()
 
-    def simulate(self, t_start: float, t_end: float, number_hidden_layers:int, width_hidden_layers:int, number_iterations:int, number_iterations_predictive_controller:int, control_horizon:float, predictive_controller:bool, initial_state=None, parameters=None, dataframe: DataFrame = None,
+    def simulate(self, t_start: float, t_end: float, number_hidden_layers:int, width_hidden_layers:int, number_iterations:int, number_iterations_predictive_controller:int, control_horizon:float, simulator_type:str, initial_state=None, parameters=None, dataframe: DataFrame = None,
                 additional_functions=None, args=None) -> Union[PINNSolution, np.ndarray]:
 
         if t_end <= t_start:
@@ -104,7 +104,7 @@ class PINNSystemHelper(BaseSimSystemHelper):
 
         path_script_pinn = os.path.join(current_path, "../_pinn_code.py")
 
-        cmd = f"python3 '{path_script_pinn}' '{csv_file_path}' '{txt_file_path_equations}' '{txt_file_path_params}' '{t_start}' '{t_end}' '{txt_file_path_initial_state}' '{number_hidden_layers}' '{width_hidden_layers}' '{number_iterations}' '{txt_file_path_additional_functions}' '{number_iterations_predictive_controller}' '{control_horizon}' '{predictive_controller}'"
+        cmd = f"python3 '{path_script_pinn}' '{csv_file_path}' '{txt_file_path_equations}' '{txt_file_path_params}' '{t_start}' '{t_end}' '{txt_file_path_initial_state}' '{number_hidden_layers}' '{width_hidden_layers}' '{number_iterations}' '{txt_file_path_additional_functions}' '{number_iterations_predictive_controller}' '{control_horizon}' '{simulator_type}'"
 
         proxy = MambaShellProxy(
             env_dir_name, env_file_path, None, self._message_dispatcher)

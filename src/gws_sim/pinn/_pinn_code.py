@@ -330,14 +330,14 @@ if simulator_type == "PINN":
 
     # train adam
     model.compile(
-        "adam", lr=0.001, external_trainable_variables=external_trainable_variables
+        "adam", lr=0.001, external_trainable_variables=external_trainable_variables, loss_weights=[1,1,1 , 1,1,1, 1,1,1]
     )
     losshistory, train_state = model.train(iterations=int(number_iterations), callbacks=[variable])
     print("step 4")
 
     # train lbfgs
     model.compile("L-BFGS", external_trainable_variables=external_trainable_variables)
-    losshistory, train_state = model.train(callbacks=[variable])
+    losshistory, train_state = model.train(iterations=20, callbacks=[variable])
 
     idx = np.argsort(train_state.X_test[:, 0])
 
@@ -365,12 +365,9 @@ if simulator_type == "PINN":
 
     print("step 5")
     df_result = pd.concat([dft, dfy, df_data, df_loss_steps, df_loss_test, df_loss_train], axis=1)
-    path = "pinn_result.csv"
 
     print("step 6")
-    csv_file_path = os.path.join(os.path.abspath(
-                os.path.dirname(__file__)),  "pinn_result.csv")
-    df_result.to_csv(csv_file_path, index=False)
+    df_result.to_csv("pinn_result.csv", index=False)
     print("step 7")
 
 else:
@@ -494,13 +491,13 @@ else:
 
         # train adam
         model.compile(
-            "adam", lr=0.001, external_trainable_variables=external_trainable_variables
+            "adam", lr=0.001, external_trainable_variables=external_trainable_variables, loss_weights=[1,1,1 , 1,1,1, 1,1,1]
         )
         losshistory, train_state = model.train(iterations=int(number_iterations), callbacks=[variable])
 
         # train lbfgs
         model.compile("L-BFGS", external_trainable_variables=external_trainable_variables, loss_weights=[1,1,1 , 1,1,1, 100,100,100])
-        losshistory, train_state = model.train(callbacks=[variable])
+        losshistory, train_state = model.train(iterations=20, callbacks=[variable])
 
         idx = np.argsort(train_state.X_test[:, 0])
 
@@ -531,12 +528,10 @@ else:
 
         print("step 5")
         df_result = pd.concat([dft, dfy, df_data, df_loss_steps, df_loss_test, df_loss_train, df_time, df_control], axis=1)
-        path = "pinn_result.csv"
 
         print("step 6")
-        csv_file_path = os.path.join(os.path.abspath(
-                    os.path.dirname(__file__)),  "pinn_result.csv")
-        df_result.to_csv(csv_file_path, index=False)
+
+        df_result.to_csv("pinn_result.csv", index=False)
         print("step 7")
         ########################################################
 

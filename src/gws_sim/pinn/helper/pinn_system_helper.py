@@ -3,7 +3,6 @@ from abc import abstractmethod
 from typing import List, Union
 
 import numpy as np
-from scipy.integrate import solve_ivp, odeint, OdeSolution
 
 from gws_core import (BadRequestException, MambaShellProxy, MessageDispatcher)
 from ...helper.base_sim_system_helper import BaseSimSystemHelper
@@ -60,8 +59,8 @@ class PINNSystemHelper(BaseSimSystemHelper):
     def initial_state_(self, args=None) -> np.ndarray:
         return self.initial_state()
 
-    def simulate(self, t_start: float, t_end: float, number_hidden_layers:int, width_hidden_layers:int, number_iterations:int, number_iterations_predictive_controller:int, control_horizon:float, simulator_type:str, initial_state=None, parameters=None, dataframe: DataFrame = None,
-                additional_functions=None, args=None) -> Union[PINNSolution, np.ndarray]:
+    def simulate(self, t_start: float, t_end: float, number_hidden_layers: int, width_hidden_layers: int, number_iterations: int, number_iterations_predictive_controller: int, control_horizon: float, simulator_type: str, initial_state=None, parameters=None, dataframe: DataFrame = None,
+                 additional_functions=None, args=None) -> Union[PINNSolution, np.ndarray]:
 
         if t_end <= t_start:
             raise BadRequestException(
@@ -92,7 +91,8 @@ class PINNSystemHelper(BaseSimSystemHelper):
             "t_end": t_end,
         }
 
-        csv_file_path, txt_file_path_equations, txt_file_path_params, txt_file_path_initial_state, txt_file_path_additional_functions, temp_dir = self.save_data_to_temp_directory(dataframe, initial_state)
+        csv_file_path, txt_file_path_equations, txt_file_path_params, txt_file_path_initial_state, txt_file_path_additional_functions, temp_dir = self.save_data_to_temp_directory(
+            dataframe, initial_state)
 
         # Unique name of the virtual env
         env_dir_name = "PinnSystemShellProxy"
@@ -116,10 +116,11 @@ class PINNSystemHelper(BaseSimSystemHelper):
                 "An error occured during the execution of the script.")
 
         shutil.rmtree(temp_dir)
-        y_df = pd.read_csv('../pinn_result.csv')
+
+        result_path = os.path.join(proxy.working_dir, 'pinn_result.csv')
+        y_df = pd.read_csv(result_path)
         if y_df is None:
             return PINNSolution(None, False, 'Error during process')
-        os.remove('../pinn_result.csv')
         return PINNSolution(y_df, True, 'Pinn system worked')
 
     def save_data_to_temp_directory(self, dataframe, initial_state):

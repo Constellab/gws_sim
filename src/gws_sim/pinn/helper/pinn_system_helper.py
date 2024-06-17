@@ -116,10 +116,10 @@ class PINNSystemHelper(BaseSimSystemHelper):
                 "An error occured during the execution of the script.")
 
         shutil.rmtree(temp_dir)
-        y_df = pd.read_csv('bricks/gws_sim/src/gws_sim/pinn/pinn_result.csv')
+        y_df = pd.read_csv('../pinn_result.csv')
         if y_df is None:
             return PINNSolution(None, False, 'Error during process')
-        os.remove('bricks/gws_sim/src/gws_sim/pinn/pinn_result.csv')
+        os.remove('../pinn_result.csv')
         return PINNSolution(y_df, True, 'Pinn system worked')
 
     def save_data_to_temp_directory(self, dataframe, initial_state):

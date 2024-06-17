@@ -330,7 +330,7 @@ if simulator_type == "PINN":
 
     # train adam
     model.compile(
-        "adam", lr=0.001, external_trainable_variables=external_trainable_variables, loss_weights=neural_network_weights
+        "adam", lr=0.001, external_trainable_variables=external_trainable_variables
     )
     losshistory, train_state = model.train(iterations=int(number_iterations), callbacks=[variable])
     print("step 4")
@@ -494,7 +494,7 @@ else:
 
         # train adam
         model.compile(
-            "adam", lr=0.001, external_trainable_variables=external_trainable_variables#, loss_weights=neural_network_weights
+            "adam", lr=0.001, external_trainable_variables=external_trainable_variables
         )
         losshistory, train_state = model.train(iterations=int(number_iterations), callbacks=[variable])
 

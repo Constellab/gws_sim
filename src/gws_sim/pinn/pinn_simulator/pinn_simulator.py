@@ -29,7 +29,7 @@ class PINNSimulator(Task):
     config_specs = {
         'simulator_type':
         StrParam(
-            default_value="PINN", human_name="Simulator type", allowed_values = ["PINN", "PINN + predictive controller"]),
+            default_value="PINN", human_name="Simulator type",short_description="Choose the simulation type : PINN or PINN + predictive controller for bioreactors (state vector = (Biomass, Substrate, Product))", allowed_values = ["PINN", "PINN + predictive controller"]),
         'number_iterations_predictive_controller':
         IntParam(
             default_value=5, human_name="Number of interations for the predictive controller", short_description="", visibility=StrParam.PROTECTED_VISIBILITY),
@@ -55,7 +55,6 @@ class PINNSimulator(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         pinn_system: PINNSystem = inputs["system"]
-
         t_start: float = params["initial_time"]
         t_end: float = params["final_time"]
         number_hidden_layers: int = params["number_hidden_layers"]

@@ -33,7 +33,6 @@ t_start_ = float(t_start)
 t_end_ = float(t_end)
 control_horizon = float(control_horizon)
 
-
 if not os.path.exists(dataframe_file):
     raise Exception(f"Error: DataFrame file '{dataframe_file}' not found.")
 
@@ -77,10 +76,31 @@ observe_y = []
 data_list = []
 temp = []
 
+neural_network_weights = np.ones(3*len(string_list_equations))
+
+# Split the code into lines and extract the first line
+first_line = string_additional_functions.strip().split('\n')[0]
+
 for i in range(len(string_list_params)):
     C.append(dde.Variable(float(string_list_params[i])))
     print(C)
-neural_network_weights = np.ones(3*len(string_list_equations))
+
+# Count the number of variables in the first line
+num_vars = len(first_line.split('=')[0].strip().strip('[]').split(','))
+
+# Ensure the list C has the same number of elements
+assert len(C) == num_vars, f"The list C must contain {num_vars} elements."
+
+# Execute the first line to assign values
+exec(first_line)
+
+# Extract the variable names from the first line
+params_names = first_line.split('=')[0].strip().strip('[]').split(',')
+params_names = [param.replace(" ", "") for param in params_names]
+
+# Assign the variables to a new list
+params_list = [eval(var.strip()) for var in params_names]
+
 exec(string_additional_functions) # the right place of this line is here !!!
 
 external_trainable_variables = C
@@ -100,8 +120,10 @@ def _predict_substrate(horizon, F_in, t0, X0, S0, P0, K):
 
     S_in = 350
 
-    K = [k_X1, k_X2, k_X3, k_P2, k_O1, k_os, k_O2, k_O3, k_op, mu_O, mu_S, K_O, K_S, K_P, K_iP, O_sat, kla]
+    for i in range(len(params_list)):
+        exec(f"{params_names[i]} = {K[i]}")
 
+    print(f"params_names : {params_names}")
     t_ = t0
     print("step _predict_substrate1")
     y = [X0, S0, P0]
@@ -129,7 +151,8 @@ def step_model(D, X_, S_, P_, dt, t_, K):
 
     S_in = 350
 
-    K = [k_X1, k_X2, k_X3, k_P2, k_O1, k_os, k_O2, k_O3, k_op, mu_O, mu_S, K_O, K_S, K_P, K_iP, O_sat, kla]
+    for i in range(len(params_list)):
+        exec(f"{params_names[i]} = {K[i]}")
 
     equations_list = []
 
@@ -140,7 +163,6 @@ def step_model(D, X_, S_, P_, dt, t_, K):
     equations_list.append(y[2] + dt * eval(string_list_equations[2]))
 
     return equations_list
-
 
 def step_controller(S_setpoint, X_meas, S_meas, P_meas, t, S_in, horizon, K):
     '''
@@ -177,8 +199,8 @@ def step_controller(S_setpoint, X_meas, S_meas, P_meas, t, S_in, horizon, K):
         return a
     elif f_b < 0:
         return b
-    iteration = 0
-    while iteration < iter_max:
+    iteration_controller = 0
+    while iteration_controller < iter_max:
         iteration += 1
         m = (a + b) / 2
         f_m = f(m)
@@ -190,7 +212,7 @@ def step_controller(S_setpoint, X_meas, S_meas, P_meas, t, S_in, horizon, K):
             f_a = f_m
     return m
 
-def step_function_generator_uniform(values_list, time):
+def uniform_step_function_generator(values_list:list, time:list):
     Func = 0
     i = 0
     subdivision_length = max(time) / len(values_list)
@@ -200,7 +222,6 @@ def step_function_generator_uniform(values_list, time):
         i += 1
 
     return Func
-
 
 ###############################
 
@@ -267,17 +288,6 @@ if simulator_type == "PINN":
     # Most backends
     def ODE_model(x, y_):
 
-        '''D = 0 # Batch
-        S_in = 100
-
-        y1, y2, y3 = y_[:, 0:1], y_[:, 1:2], y_[:, 2:3]  # X, S, P
-
-        dy1_x = dde.grad.jacobian(y_, x, i=0)
-        dy2_x = dde.grad.jacobian(y_, x, i=1)
-        dy3_x = dde.grad.jacobian(y_, x, i=2)
-
-        return [dy1_x - y1,  dy2_x - y2, dy3_x - y3]'''
-
         equations_list = []
         dy_x = []
         y = []
@@ -337,7 +347,7 @@ if simulator_type == "PINN":
 
     # train lbfgs
     model.compile("L-BFGS", external_trainable_variables=external_trainable_variables)
-    losshistory, train_state = model.train(iterations=20, callbacks=[variable])
+    losshistory, train_state = model.train(callbacks=[variable])
 
     idx = np.argsort(train_state.X_test[:, 0])
 
@@ -387,27 +397,13 @@ else:
     S0 = float(string_list_initial_state[1])
     P0 = float(string_list_initial_state[2])
     K = C
+
     for iteration in range(int(number_iterations_predictive_controller)):
 
         K = [float(num) for num in K]
 
-        k_X1 = dde.Variable((K[0])**(1/2)) #': 0.49,
-        k_X2 = dde.Variable((K[1])**(1/2)) #': 0.05,
-        k_X3 = dde.Variable((K[2])**(1/2)) #': 0.72,
-        k_P2 = dde.Variable((K[3])**(1/2))#': 0.48,
-        k_O1 = dde.Variable((K[4])**(1/2)) #': 0.3968,
-        k_os = dde.Variable((K[5])**(1/2))#': 0.3968,
-        k_O2 = dde.Variable((K[6])**(1/2)) #': 0,
-        k_O3 = dde.Variable((K[7])**(1/2)) #': 1.104,
-        k_op = dde.Variable((K[8])**(1/2))#': 1.104,
-        mu_O = dde.Variable((K[9])**(1/2))#': 0.256,
-        mu_S = dde.Variable((K[10])**(1/2) )#': 3.5,
-        K_O = dde.Variable((K[11])**(1/2)) #': 0.0001,
-        K_S = dde.Variable((K[12])**(1/2)) #': 0.1,
-        K_P = dde.Variable((K[13])**(1/2))#': 0.1,
-        K_iP = dde.Variable((K[14])**(1/2)) #': 10,
-        O_sat = dde.Variable((K[15])**(1/2)) #': 0.035,
-        kla = dde.Variable((K[16])**(1/2))#': 100
+        for i in range(len(params_list)):
+            exec(f"{params_names[i]} = dde.Variable(({K[i]})**(1/2))")
 
         ex_input = u # exogenous input
 
@@ -419,17 +415,6 @@ else:
             return spline(t)
 
         def ODE_model(x, y_):
-
-            '''D = 0 # Batch
-            S_in = 100
-
-            y1, y2, y3 = y_[:, 0:1], y_[:, 1:2], y_[:, 2:3]  # X, S, P
-
-            dy1_x = dde.grad.jacobian(y_, x, i=0)
-            dy2_x = dde.grad.jacobian(y_, x, i=1)
-            dy3_x = dde.grad.jacobian(y_, x, i=2)
-
-            return [dy1_x - y1,  dy2_x - y2, dy3_x - y3]'''
 
             equations_list = []
             dy_x = []
@@ -451,7 +436,7 @@ else:
         geom = dde.geometry.TimeDomain(t_start_, t_end_)
 
         # Initial conditions
-        ic1 = dde.icbc.IC(geom, lambda X: X0, boundary, component=0) #0.20000452941176472, boundary, component=0)
+        ic1 = dde.icbc.IC(geom, lambda X: X0, boundary, component=0)
         ic2 = dde.icbc.IC(geom, lambda X: S0, boundary, component=1)
         ic3 = dde.icbc.IC(geom, lambda X: P0, boundary, component=2)
 
@@ -491,13 +476,13 @@ else:
 
         # train adam
         model.compile(
-            "adam", lr=0.001, external_trainable_variables=external_trainable_variables, loss_weights=[1,1,1 , 1,1,1, 1,1,1]
+            "adam", lr=0.001, external_trainable_variables=external_trainable_variables #, loss_weights=[1,1,1 , 1,1,1, 1,1,1]
         )
         losshistory, train_state = model.train(iterations=int(number_iterations), callbacks=[variable])
 
         # train lbfgs
-        model.compile("L-BFGS", external_trainable_variables=external_trainable_variables, loss_weights=[1,1,1 , 1,1,1, 100,100,100])
-        losshistory, train_state = model.train(iterations=20, callbacks=[variable])
+        model.compile("L-BFGS", external_trainable_variables=external_trainable_variables) #, loss_weights=[1,1,1 , 1,1,1, 100,100,100])
+        losshistory, train_state = model.train(callbacks=[variable])
 
         idx = np.argsort(train_state.X_test[:, 0])
 
@@ -532,7 +517,9 @@ else:
         print("step 6")
 
         df_result.to_csv("pinn_result.csv", index=False)
+
         print("step 7")
+
         ########################################################
 
         filename = 'variables.dat'
@@ -581,6 +568,6 @@ else:
 
         print(D_list)
 
-        u = step_function_generator_uniform(values_list=D_list, time=time)
+        u = uniform_step_function_generator(values_list=D_list, time=time)
 
         ################################################################################################

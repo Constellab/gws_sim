@@ -12,7 +12,6 @@ import os
 import tempfile
 import shutil
 
-
 class PINNSolution:
     y = None
     success = None
@@ -119,6 +118,7 @@ class PINNSystemHelper(BaseSimSystemHelper):
 
         result_path = os.path.join(proxy.working_dir, 'pinn_result.csv')
         y_df = pd.read_csv(result_path)
+
         if y_df is None:
             return PINNSolution(None, False, 'Error during process')
         return PINNSolution(y_df, True, 'Pinn system worked')

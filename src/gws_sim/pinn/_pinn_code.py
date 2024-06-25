@@ -494,9 +494,9 @@ else:
         )
         losshistory, train_state = model.train(iterations=int(number_iterations), callbacks=[variable])
 
-        '''# train lbfgs
+        # train lbfgs
         model.compile("L-BFGS", external_trainable_variables=external_trainable_variables) #, loss_weights=[1,1,1 , 1,1,1, 100,100,100])
-        losshistory, train_state = model.train(callbacks=[variable])'''
+        losshistory, train_state = model.train(callbacks=[variable])
 
         idx = np.argsort(train_state.X_test[:, 0])
 

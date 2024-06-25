@@ -120,14 +120,15 @@ def _predict_substrate(horizon, F_in, t0, X0, S0, P0, K):
 
     S_in = 350
 
+    print('__________________________________________________')
+    print("start _predict_substrate")
+
     for i in range(len(params_list)):
         exec(f"{params_names[i]} = {K[i]}")
 
-    print(f"params_names : {params_names}")
     t_ = t0
-    print("step _predict_substrate1")
+
     y = [X0, S0, P0]
-    print("step _predict_substrate2")
 
     D = F_in
     while t_ < t0 + horizon:
@@ -136,14 +137,14 @@ def _predict_substrate(horizon, F_in, t0, X0, S0, P0, K):
         y[1] = y[1] + dt_predict * eval(string_list_equations[1])
         y[2] = y[2] + dt_predict * eval(string_list_equations[2])
 
-        t_ = t_ + dt_predict
+        t_old = t_
 
-        print(f'{t_} ---> {t0+horizon}')
+        t_ = t_ + dt
 
-        '''X_list = [X_list, X_]
-        S_list = [S_list, S_]
-        P_list = [P_list, P_]'''
-    print("step _predict_substrate3")
+        print(f'{t_old} + {dt} = {t_} ---> {t0+horizon}')
+
+    print(f"end _predict_substrate : predicted subsrate = {y[1]}")
+    print('__________________________________________________')
 
     return y[1]
 
@@ -194,22 +195,36 @@ def step_controller(S_setpoint, X_meas, S_meas, P_meas, t, S_in, horizon, K):
     a = D_min
     b = D_max
     f_a = f(a)
+    print(f'f(a) = {f_a}')
+    print('__________')
     f_b = f(b)
+    print(f'f(b) = {f_b}')
+    print('__________')
+
     if f_a > 0:
+        print('f(a) is positive')
+        print('end: controller')
         return a
     elif f_b < 0:
+        print('f(b) is negative')
+        print('end: controller')
         return b
+
     iteration_controller = 0
     while iteration_controller < iter_max:
-        iteration += 1
+        iteration_controller += 1
+        print(f'iteration_controller = {iteration_controller}')
         m = (a + b) / 2
         f_m = f(m)
+        print(f'f(m) = {f_m}')
+        print('__________')
         if f_m * f_a < 0:
             b = m
             f_b = f_m
         else:
             a = m
             f_a = f_m
+
     return m
 
 def uniform_step_function_generator(values_list:list, time:list):
@@ -375,7 +390,6 @@ if simulator_type == "PINN":
 
     print("step 5")
     df_result = pd.concat([dft, dfy, df_data, df_loss_steps, df_loss_test, df_loss_train], axis=1)
-
     print("step 6")
     df_result.to_csv("pinn_result.csv", index=False)
     print("step 7")
@@ -480,9 +494,9 @@ else:
         )
         losshistory, train_state = model.train(iterations=int(number_iterations), callbacks=[variable])
 
-        # train lbfgs
+        '''# train lbfgs
         model.compile("L-BFGS", external_trainable_variables=external_trainable_variables) #, loss_weights=[1,1,1 , 1,1,1, 100,100,100])
-        losshistory, train_state = model.train(callbacks=[variable])
+        losshistory, train_state = model.train(callbacks=[variable])'''
 
         idx = np.argsort(train_state.X_test[:, 0])
 
@@ -546,7 +560,10 @@ else:
 
         while t < maxtime:
 
+            print('##===============================================##')
+            print(f'start step controller: time {t}')
             # S_setpoint = process.Scrit
+
             D = step_controller(S_setpoint=0.1,
                                 X_meas=X,
                                 S_meas=S,
@@ -556,17 +573,28 @@ else:
                                 horizon=control_horizon,
                                 K=K)
 
+            print(f"end step controller: time = {t}")
+            print('__________________________________________________')
             D_list.append(D)
             print(f'D = {D}')
+            print('__________________________________________________')
+
+            print(f'start step model loop: time {t}')
 
             t2 = t + control_horizon
 
             while t < t2:
                 measurements = step_model(D=D, X_=X, S_=S, P_=P,dt=dt, t_=t, K=K)
+                print(f"step model: time = {t}")
                 t = t + dt
                 X, S, P = measurements
 
-        print(D_list)
+            print(f"end step model loop: time = {t}")
+            print('__________________________________________________')
+
+        print("end : all loops")
+
+        print(f'Control law : {D_list}')
 
         u = uniform_step_function_generator(values_list=D_list, time=time)
 

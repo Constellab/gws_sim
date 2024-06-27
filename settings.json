@@ -3,7 +3,7 @@
   "author": "Gencovery",
   "author_email": "admin@gencovery.com",
   "description": "Gencovery brick for dynamical system simulation",
-  "version": "0.5.2-beta.1",
+  "version": "0.5.2-beta.2",
   "variables": {
     "gws_sim:testdata_dir": "${CURRENT_DIR}/tests/testdata"
   },
@@ -11,7 +11,7 @@
     "bricks": [
       {
         "name": "gws_core",
-        "version": "0.8.0-beta.4"
+        "version": "0.8.0"
       }
     ],
     "pip": [
@@ -20,19 +20,19 @@
         "packages": [
           {
             "name": "numba",
-            "version": "0.56.4"
+            "version": "0.59.1"
           },
           {
             "name": "pytensor",
-            "version": "2.10.1"
+            "version": "2.20.0"
           },
           {
             "name": "pymc",
-            "version": "5.2.0"
+            "version": "5.15.0"
           },
           {
             "name": "arviz",
-            "version": "0.15.1"
+            "version": "0.18.0"
           }
         ]
       }
